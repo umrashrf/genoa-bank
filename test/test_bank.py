@@ -1,0 +1,110 @@
+import os
+import json
+import runpy
+import unittest
+
+from bank import settings
+
+
+class TestDeposit(unittest.TestCase):
+
+    def setUp(self):
+        settings.DATABASE_URI = 'sqlite:///test.db'
+        runpy.run_module('bank.db',
+                         {'settings.DATABASE_URI': settings.DATABASE_URI},
+                         '__main__')
+
+    def perform_action(self, json_raw, action_class):
+        json_obj = json.loads(json_raw)
+        action = action_class(json_obj)
+
+        from bank.db import Currency, Account, Transaction
+
+        ccy = json_obj.get('ccy').upper()
+        currency = action.session.query(Currency).filter_by(Value=ccy).first()
+        assert currency
+
+        name = json_obj.get('account')
+        account = action.session.query(Account).filter_by(Name=name,
+                                                          Currency=currency.Value).first()
+        assert account
+
+        amt = json_obj.get('amt')
+        money = action.session.query(Transaction).filter_by(Account=account.Name,
+                                                            Amount=amt).first()
+        assert money.Amount == amt
+
+    def test_deposit(self):
+        json_raw = '{"method": "deposit", "account": "bob", "amt" : 10, "ccy": "EUR"}'
+        from bank.api.method import Deposit
+        self.perform_action(json_raw, Deposit)
+
+    def test_withdrawal(self):
+        json_raw = '{"method": "withdrawal", "account": "alice", "amt" : 10, "ccy": "EUR"}'
+        from bank.api.method import Withdrawal
+        self.perform_action(json_raw, Withdrawal)
+
+    def test_transfer(self):
+        json_raw = '{"method": "transfer", "from_account": "alice", "to_account": "bob", "amt" : 100, "ccy": "GBP"}'
+        json_obj = json.loads(json_raw)
+        from bank.api.method import Transfer
+        action_class = Transfer
+        action = action_class(json_obj)
+
+        from bank.db import Currency, Account, Transaction
+
+        ccy = json_obj.get('ccy').upper()
+        currency = action.session.query(Currency).filter_by(Value=ccy).first()
+        assert currency
+
+        from_name = json_obj.get('from_account')
+        from_account = action.session.query(Account).filter_by(Name=from_name,
+                                                               Currency=currency.Value).first()
+        assert from_account
+
+        to_name = json_obj.get('to_account')
+        to_account = action.session.query(Account).filter_by(Name=to_name,
+                                                             Currency=currency.Value).first()
+        assert to_account
+
+        amt = -json_obj.get('amt')
+        from_money = action.session.query(Transaction).filter_by(Account=from_account.Name,
+                                                                 Amount=amt).first()
+        assert from_money.Amount == amt
+
+        amt = json_obj.get('amt')
+        to_money = action.session.query(Transaction).filter_by(Account=to_account.Name,
+                                                                 Amount=amt).first()
+        assert to_money.Amount == amt
+
+    def test_get_balances(self):
+        from bank.api.method import Deposit, GetBalances
+
+        # get some data first
+        json_raw = '{"method": "deposit", "account": "bob", "amt" : 10, "ccy": "EUR"}'
+        self.perform_action(json_raw, Deposit)
+
+        # get some data first
+        json_raw = '{"method": "deposit", "account": "bob", "amt" : 10, "ccy": "GBP"}'
+        self.perform_action(json_raw, Deposit)
+
+        json_raw = '{"method": "get_balances", "date": "2018-10-01", "account": "bob"}'
+        json_obj = json.loads(json_raw)
+        action_class = GetBalances
+        action = action_class(json_obj)
+
+        json_output = action.format()
+        output = json.loads(json_output)
+        assert 'balances' in output
+        assert 'EUR' in output['balances']
+        assert 'GBP' in output['balances']
+        assert 'USD' not in output['balances']
+
+    def tearDown(self):
+        try:
+            os.remove(os.path.basename(settings.DATABASE_URI))
+        except:
+            pass
+
+if __name__ == '__main__':
+    unittest.main()

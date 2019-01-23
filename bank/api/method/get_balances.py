@@ -1,5 +1,4 @@
 import json
-import datetime
 
 from ...db import Account
 from .base import Base
@@ -16,7 +15,8 @@ class GetBalances(Base):
         balances = {}
         for account in accounts:
             if account.Currency not in balances:
-                balances[account.Currency] = sum([t.Amount for t in account.Transaction])
-        today = datetime.datetime.now().strftime('%Y-%m-%d')
-        return json.dumps(dict(date=today, balances=balances))
+                balances[account.Currency] = 0
+            balances[account.Currency] += sum([t.Amount for t in account.Transactions])
+        date = self.json_obj.get('date')
+        return json.dumps(dict(date=date, balances=balances))
 

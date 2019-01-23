@@ -16,19 +16,21 @@ class Currency(Base):
     __tablename__ = 'Currencies'
 
     Value = Column(String, primary_key=True)
+    Accounts = relationship('Account')
 
 class Account(Base):
     __tablename__ = "Accounts"
 
-    Name = Column(String, primary_key=True)
+    Id = Column(Integer, primary_key=True)
+    Name = Column(String)
     Transactions = relationship('Transaction')
-    Currency = Column(Integer, ForeignKey(Currency.Value))
+    Currency = Column(String, ForeignKey(Currency.Value))
 
 class Transaction(Base):
     __tablename__ = "Transactions"
 
     Id = Column(Integer, primary_key=True)
-    Account = Column(Integer, ForeignKey(Account.Name))
+    Account = Column(String, ForeignKey(Account.Id))
     Amount = Column(Float)
 
 if __name__ == '__main__':
