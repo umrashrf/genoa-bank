@@ -1,6 +1,7 @@
 import os
 import json
 import runpy
+import logging
 import unittest
 
 from bank import settings
@@ -9,6 +10,8 @@ from bank import settings
 class TestDeposit(unittest.TestCase):
 
     def setUp(self):
+        logging.disable(logging.CRITICAL)
+
         settings.DATABASE_URI = 'sqlite:///test.db'
         runpy.run_module('bank.db',
                          {'settings.DATABASE_URI': settings.DATABASE_URI},
