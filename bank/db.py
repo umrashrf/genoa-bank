@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+import logging
 
 from sqlalchemy import create_engine, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
@@ -48,3 +49,5 @@ if __name__ == '__main__':
         Currency(Value='RUB'),
     ])
     session.commit()
+
+    logging.info('Database successfully created at %s', settings.DATABASE_URI)
