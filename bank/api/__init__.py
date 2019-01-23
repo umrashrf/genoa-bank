@@ -20,7 +20,7 @@ class BankWebSocket(tornado.websocket.WebSocketHandler):
             self.write_message("Invalid JSON")
             return
 
-        method = json_obj.get('method').lower()
+        method = json_obj.get('method', '').lower()
         if method not in METHODS:
             self.write_message('Invalid method provided (%s)' % method)
             return
