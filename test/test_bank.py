@@ -93,7 +93,7 @@ class TestDeposit(unittest.TestCase):
         action_class = GetBalances
         action = action_class(json_obj)
 
-        json_output = action.format()
+        json_output = action.toJSON()
         output = json.loads(json_output)
         assert 'balances' in output
         assert 'EUR' in output['balances']
