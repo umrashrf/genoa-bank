@@ -36,7 +36,8 @@ class BankWebSocket(tornado.websocket.WebSocketHandler):
         elif method == 'get_balances':
             Action = GetBalances
 
-        self.write_message(Action(json_obj))
+        json_output = Action(json_obj).toJSON()
+        self.write_message(json_output)
 
     def on_close(self):
         print("WebSocket closed")

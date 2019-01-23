@@ -1,3 +1,5 @@
+import json
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -21,3 +23,6 @@ class Base:
         if not currency:
             raise 'Invalid Currency'
         return currency
+
+    def toJSON(self):
+        return json.dumps('{}')
