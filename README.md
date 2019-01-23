@@ -1,3 +1,9 @@
+## Installation
+
+```
+$ pip install https://github.com/umrashrf/genoa-bank.git
+```
+
 ## Setup Database
 
 ```
