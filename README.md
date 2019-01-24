@@ -1,3 +1,7 @@
+# Bank App
+
+[![CircleCI](https://circleci.com/gh/umrashrf/genoa-bank.svg?style=svg)](https://circleci.com/gh/umrashrf/genoa-bank)
+
 ## Installation
 
 ```
