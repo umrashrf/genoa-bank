@@ -1,0 +1,2 @@
+class MoneyLaunderingException(Exception):
+    pass

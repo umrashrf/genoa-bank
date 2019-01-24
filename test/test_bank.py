@@ -36,6 +36,8 @@ class TestDeposit(unittest.TestCase):
         money = sum([ts.Amount for ts in account.Transactions])
         assert money == amt
 
+        assert action.status == 0
+
     def test_deposit(self):
         json_raw = '{"method": "deposit", "account": "bob", "amt" : 10, "ccy": "EUR"}'
         from bank.api.method import Deposit
@@ -108,6 +110,54 @@ class TestDeposit(unittest.TestCase):
         assert 'EUR' in output['balances']
         assert 'GBP' in output['balances']
         assert 'USD' not in output['balances']
+
+    def test_money_laundering(self):
+        from bank.db import Currency, Account, Transaction
+        from bank.api.method import Deposit, GetBalances
+        from bank.exceptions import MoneyLaunderingException
+
+        # get some data first
+        json_raw = '{"method": "deposit", "account": "bob", "amt" : 500, "ccy": "EUR"}'
+        json_obj = json.loads(json_raw)
+        action = Deposit(json_obj)
+
+        ccy = json_obj.get('ccy').upper()
+        currency = action.session.query(Currency).filter_by(Value=ccy).first()
+        assert currency
+
+        name = json_obj.get('account')
+        account = action.session.query(Account).filter_by(Name=name,
+                                                          Currency=currency.Value).first()
+        assert account
+
+        transactions = action.session.query(Transaction).filter_by(Account=account.Id)
+        assert transactions
+
+        # notice amt =
+        amt = json_obj.get('amt')
+        money = sum([ts.Amount for ts in transactions])
+        assert money == amt
+
+        # 2
+        json_raw = '{"method": "deposit", "account": "bob", "amt" : 5000, "ccy": "EUR"}'
+        json_obj = json.loads(json_raw)
+        action = Deposit(json_obj)
+
+        transactions = action.session.query(Transaction).filter_by(Account=account.Id)
+        assert transactions
+
+        # notice amt +=
+        amt += json_obj.get('amt')
+        money = sum([ts.Amount for ts in transactions])
+        assert money == amt
+
+        # 3
+        json_raw = '{"method": "deposit", "account": "bob", "amt" : 5000, "ccy": "EUR"}'
+        json_obj = json.loads(json_raw)
+        self.assertRaises(MoneyLaunderingException, Deposit, json_obj)
+
+    def test_money_laundering_different_currencies(self):
+        pass
 
     def tearDown(self):
         try:

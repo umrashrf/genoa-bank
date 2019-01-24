@@ -12,6 +12,6 @@ class Deposit(Base):
 
         # FIXME: verify if money is under threshold of money laundering laws
         amount = json_obj.get('amt')
-        money = Transaction(Account=account.Id, Amount=amount)
+        money = self.action(Transaction, Account=account.Id, Amount=amount)
         self.session.add(money)
         self.session.commit()

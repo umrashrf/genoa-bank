@@ -5,14 +5,23 @@ from sqlalchemy.orm import sessionmaker
 
 from ... import settings
 from ...db import Currency, Account
+from ...exceptions import MoneyLaunderingException
 
 class Base:
+
+    status = 0
 
     def __init__(self, json_obj):
         self.json_obj = json_obj
         eng = create_engine(settings.DATABASE_URI)
         Session = sessionmaker(bind=eng)
         self.session = Session()
+
+    def action(self, action_class, **kwargs):
+        try:
+            return action_class(**kwargs)
+        except MoneyLaunderingException as e:
+            self.status = e.msg
 
     def get_currency(self):
         ccy = self.json_obj.get('ccy', settings.DEFAULT_CURRENCY).upper()
@@ -39,4 +48,4 @@ class Base:
         return account
 
     def toJSON(self):
-        return json.dumps('{}')
+        return json.dumps('{status: %s}' % self.status)
