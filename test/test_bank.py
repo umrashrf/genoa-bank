@@ -33,9 +33,8 @@ class TestDeposit(unittest.TestCase):
         assert account
 
         amt = json_obj.get('amt')
-        money = action.session.query(Transaction).filter_by(Account=account.Name,
-                                                            Amount=amt).first()
-        assert money.Amount == amt
+        money = sum([ts.Amount for ts in account.Transactions])
+        assert money == amt
 
     def test_deposit(self):
         json_raw = '{"method": "deposit", "account": "bob", "amt" : 10, "ccy": "EUR"}'
@@ -48,9 +47,18 @@ class TestDeposit(unittest.TestCase):
         self.perform_action(json_raw, Withdrawal)
 
     def test_transfer(self):
+        from bank.api.method import Deposit, Transfer
+
+        # get some data first
+        json_raw = '{"method": "deposit", "account": "alice", "amt" : 100, "ccy": "GBP"}'
+        self.perform_action(json_raw, Deposit)
+
+        # get some data first
+        json_raw = '{"method": "deposit", "account": "bob", "amt" : 10, "ccy": "GBP"}'
+        self.perform_action(json_raw, Deposit)
+
         json_raw = '{"method": "transfer", "from_account": "alice", "to_account": "bob", "amt" : 100, "ccy": "GBP"}'
         json_obj = json.loads(json_raw)
-        from bank.api.method import Transfer
         action_class = Transfer
         action = action_class(json_obj)
 
@@ -65,20 +73,18 @@ class TestDeposit(unittest.TestCase):
                                                                Currency=currency.Value).first()
         assert from_account
 
+        amt = 100 - json_obj.get('amt')
+        from_money = sum([ts.Amount for ts in from_account.Transactions])
+        assert from_money == amt
+
         to_name = json_obj.get('to_account')
         to_account = action.session.query(Account).filter_by(Name=to_name,
                                                              Currency=currency.Value).first()
         assert to_account
 
-        amt = -json_obj.get('amt')
-        from_money = action.session.query(Transaction).filter_by(Account=from_account.Name,
-                                                                 Amount=amt).first()
-        assert from_money.Amount == amt
-
-        amt = json_obj.get('amt')
-        to_money = action.session.query(Transaction).filter_by(Account=to_account.Name,
-                                                                 Amount=amt).first()
-        assert to_money.Amount == amt
+        amt = 10 + json_obj.get('amt')
+        to_money = sum([ts.Amount for ts in to_account.Transactions])
+        assert to_money == amt
 
     def test_get_balances(self):
         from bank.api.method import Deposit, GetBalances

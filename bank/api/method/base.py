@@ -4,8 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from ... import settings
-from ...db import Currency
-
+from ...db import Currency, Account
 
 class Base:
 
@@ -23,6 +22,21 @@ class Base:
         if not currency:
             raise 'Invalid Currency'
         return currency
+
+    def get_or_create_account(self, name):
+        currency = self.get_currency()
+        account = self.session.query(Account) \
+                              .filter_by(Name=name, Currency=currency.Value) \
+                              .first()
+        if not account:
+            account = Account(Name=name, Currency=currency.Value)
+            self.session.add(account)
+            self.session.commit()
+
+        account = self.session.query(Account) \
+                              .filter_by(Name=name, Currency=currency.Value) \
+                              .first()
+        return account
 
     def toJSON(self):
         return json.dumps('{}')

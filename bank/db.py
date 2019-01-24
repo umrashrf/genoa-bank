@@ -31,7 +31,7 @@ class Transaction(Base):
     __tablename__ = "Transactions"
 
     Id = Column(Integer, primary_key=True)
-    Account = Column(String, ForeignKey(Account.Id))
+    Account = Column(Integer, ForeignKey(Account.Id))
     Amount = Column(Float)
 
 if __name__ == '__main__':
