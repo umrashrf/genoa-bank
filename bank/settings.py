@@ -9,3 +9,5 @@ DEFAULT_CURRENCY = 'EUR'
 
 # DANGER
 TIMEZONE = datetime.timezone.utc
+
+DATE_FORMAT = '%Y-%m-%d'
